@@ -20,11 +20,13 @@ warnings.filterwarnings("ignore")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 HF_REPO_ID   = "dodsa/bharat-fpo-mandi-models"
-MASTER_CSV   = os.getenv("MASTER_CSV", "data/india_mandi_master.csv")
-METRICS_FILE = os.getenv("METRICS_FILE", "data/model_metrics.jsonl")
-CACHE_DIR    = "/tmp/bharat_fpo_models"  # models yahan cache honge
-
+CACHE_DIR    = "/tmp/bharat_fpo_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
+
+MASTER_CSV   = hf_hub_download(repo_id=HF_REPO_ID, filename="india_mandi_master.csv", repo_type="model", cache_dir=CACHE_DIR)
+METRICS_FILE = hf_hub_download(repo_id=HF_REPO_ID, filename="model_metrics.jsonl", repo_type="model", cache_dir=CACHE_DIR)
+
+
 
 # ── Load Master CSV ───────────────────────────────────────────────────────────
 print("Loading master CSV...")
