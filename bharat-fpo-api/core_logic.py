@@ -30,10 +30,12 @@ METRICS_FILE = hf_hub_download(repo_id=HF_REPO_ID, filename="model_metrics.jsonl
 
 # ── Load Master CSV ───────────────────────────────────────────────────────────
 print("Loading master CSV...")
-master = pd.read_csv(MASTER_CSV, low_memory=False,
-                     dtype={"min_price": "float64",
-                            "max_price": "float64",
-                            "modal_price": "float64"})
+master = pd.read_csv(MASTER_CSV,
+                     usecols=["state", "market", "commodity", "arrival_date", 
+                               "min_price", "max_price", "modal_price"],
+                     dtype={"min_price": "float32",
+                            "max_price": "float32",
+                            "modal_price": "float32"})
 master["arrival_date"] = pd.to_datetime(master["arrival_date"], errors="coerce", dayfirst=True)
 master["month"]        = master["arrival_date"].dt.month
 master["year"]         = master["arrival_date"].dt.year
