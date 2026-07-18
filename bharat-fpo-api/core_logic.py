@@ -35,9 +35,9 @@ master["arrival_date"] = pd.to_datetime(master["arrival_date"], errors="coerce",
 master["month"]        = master["arrival_date"].dt.month
 master["year"]         = master["arrival_date"].dt.year
 master = master.dropna(subset=["arrival_date", "modal_price"])
-master["state"]     = master["state"].str.strip().str.title()
-master["commodity"] = master["commodity"].str.strip().str.title()
-master["market"]    = master["market"].str.strip()
+master["state"] = master["state"].str.strip().str.title().astype("category")
+master["commodity"] = master["commodity"].str.strip().str.title().astype("category")
+master["market"] = master["market"].str.strip().astype("category")
 print(f"Loaded {len(master):,} records")
 
 try:
