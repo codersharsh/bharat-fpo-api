@@ -8,3 +8,5 @@ python-dateutil
 huggingface_hub
 requests
 python-multipart
+pyarrow 
+
