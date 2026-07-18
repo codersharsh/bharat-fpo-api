@@ -23,19 +23,14 @@ HF_REPO_ID   = "dodsa/bharat-fpo-mandi-models"
 CACHE_DIR    = "/tmp/bharat_fpo_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-MASTER_CSV   = hf_hub_download(repo_id=HF_REPO_ID, filename="india_mandi_master.csv", repo_type="model", cache_dir=CACHE_DIR)
+MASTER_CSV   = hf_hub_download(repo_id=HF_REPO_ID, filename="india_mandi_master.parquet", repo_type="model", cache_dir=CACHE_DIR)
 METRICS_FILE = hf_hub_download(repo_id=HF_REPO_ID, filename="model_metrics.jsonl", repo_type="model", cache_dir=CACHE_DIR)
 
 
 
 # ── Load Master CSV ───────────────────────────────────────────────────────────
 print("Loading master CSV...")
-master = pd.read_csv(MASTER_CSV,
-                     usecols=["state", "market", "commodity", "arrival_date", 
-                               "min_price", "max_price", "modal_price"],
-                     dtype={"min_price": "float32",
-                            "max_price": "float32",
-                            "modal_price": "float32"})
+master = pd.read_parquet(MASTER_CSV)
 master["arrival_date"] = pd.to_datetime(master["arrival_date"], errors="coerce", dayfirst=True)
 master["month"]        = master["arrival_date"].dt.month
 master["year"]         = master["arrival_date"].dt.year
