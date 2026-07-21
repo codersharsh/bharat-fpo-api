@@ -112,24 +112,28 @@ def get_group_data(state, market, commodity):
     """Ek state+market+commodity ka poora price history MongoDB se fetch karo"""
     cursor = mandi_collection.find(
         {"state": state, "market": market, "commodity": commodity},
-        {"_id": 0, "arrival_date": 1, "modal_price": 1, "min_price": 1, "max_price": 1, "month": 1, "year": 1}
+        {"_id": 0, "arrival_date": 1, "modal_price": 1, "min_price": 1, "max_price": 1}
     ).sort("arrival_date", 1)
     df = pd.DataFrame(list(cursor))
     if df.empty:
         return df
     df["arrival_date"] = pd.to_datetime(df["arrival_date"])
+    df["month"] = df["arrival_date"].dt.month
+    df["year"] = df["arrival_date"].dt.year
     return df
 
 def get_group_data_state_commodity(state, commodity):
     """Poore state ka ek commodity ka data (market-wise comparison ke liye)"""
     cursor = mandi_collection.find(
         {"state": state, "commodity": commodity},
-        {"_id": 0, "market": 1, "arrival_date": 1, "modal_price": 1, "month": 1, "year": 1}
+        {"_id": 0, "market": 1, "arrival_date": 1, "modal_price": 1}
     )
     df = pd.DataFrame(list(cursor))
     if df.empty:
         return df
     df["arrival_date"] = pd.to_datetime(df["arrival_date"])
+    df["month"] = df["arrival_date"].dt.month
+    df["year"] = df["arrival_date"].dt.year
     return df
 
 # ── Lazy Model Loading from HF (same as before) ───────────────────────────────
@@ -302,19 +306,16 @@ def get_best_mandi(state, commodity, top_n=5):
     today = pd.Timestamp.now().normalize()
     month = today.month
     cursor = mandi_collection.find(
-        {"state": state, "commodity": commodity, "month": month},
-        {"_id": 0, "market": 1, "modal_price": 1}
+        {"state": state, "commodity": commodity},
+        {"_id": 0, "market": 1, "modal_price": 1, "arrival_date": 1}
     )
     state_data = pd.DataFrame(list(cursor))
-
-    if state_data.empty:
-        cursor = mandi_collection.find(
-            {"state": state, "commodity": commodity},
-            {"_id": 0, "market": 1, "modal_price": 1}
-        )
-        state_data = pd.DataFrame(list(cursor))
-
     if state_data.empty: return None
+
+    state_data["arrival_date"] = pd.to_datetime(state_data["arrival_date"])
+    filtered = state_data[state_data["arrival_date"].dt.month == month]
+    if not filtered.empty:
+        state_data = filtered
     mandi_avg         = state_data.groupby("market")["modal_price"].mean().reset_index()
     mandi_avg.columns = ["market", "avg_price"]
     mandi_avg["avg_price"] = mandi_avg["avg_price"].round(2)
