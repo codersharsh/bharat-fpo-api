@@ -8,5 +8,6 @@ python-dateutil
 huggingface_hub
 requests
 python-multipart
-pyarrow 
-
+pyarrow
+pymongo[srv]
+certifi
