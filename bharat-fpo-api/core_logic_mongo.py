@@ -276,8 +276,7 @@ def get_future_prediction(state, market, commodity, n_months=None, from_date=Non
     for d in dates:
         yr, mo = d.year, d.month
         if use_fallback:
-            price = historical_fallback(state, market, commodity, mo,
-                                        last_known_price=last_known_price)
+            price = historical_fallback(state, market, commodity, mo, last_known_price=last_known_price)
             conf  = "Historical Avg"
             last_known_price = price
         else:
@@ -287,9 +286,20 @@ def get_future_prediction(state, market, commodity, n_months=None, from_date=Non
                 feat["price_lag2"]     = recent[-2] if len(recent) >= 2 else (grp["modal_price"].mean() if not grp.empty else 0)
                 feat["rolling_mean_3"] = float(np.mean(recent[-3:])) if recent else (grp["modal_price"].mean() if not grp.empty else 0)
                 feat["rolling_std_3"]  = float(np.std(recent[-3:])) if len(recent) >= 2 else 0
-            X     = pd.DataFrame([[feat.get(c, 0) for c in feature_cols]], columns=feature_cols)
-            price = round(float(model.predict(X)[0]), 2)
-            conf  = "AI Model"
+
+            X = pd.DataFrame([[feat.get(c, 0) for c in feature_cols]], columns=feature_cols)
+            raw_price = float(model.predict(X)[0])
+
+            # Safety clamp: model output actual recent price se bahut alag ho
+            # (feature mismatch ka sign), toh historical avg pe fallback karo
+            reference_price = recent[-1] if recent else None
+            if reference_price and reference_price > 0 and abs(raw_price - reference_price) / reference_price > 0.4:
+                price = historical_fallback(state, market, commodity, mo, last_known_price=reference_price)
+                conf  = "Historical Avg (model rejected — out of range)"
+            else:
+                price = round(raw_price, 2)
+                conf  = "AI Model"
+
             recent.append(price)
             if len(recent) > 3: recent.pop(0)
 
